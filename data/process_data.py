@@ -1,16 +1,55 @@
 import sys
-
+import pandas as pd
+from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    """Load messages and categories datasets"""
+    # Load CSV files
+    messages = pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
+
+    # Merge dataframes
+    df = messages.merge(categories, on="id")
+
+    # Split categories column into multiple columns
+    categories = df.categories.str.split(";", expand=True)
+
+    # Assign new column names
+    row = categories.iloc[0]
+    category_colnames = [cat.split("-")[0] for cat in row]
+    categories.columns = category_colnames
+
+    # Extract numeric values from new columns
+    for column in categories:
+        # Extract the last character of the string
+        categories[column] = categories[column].str[-1]
+        
+        # Convert column from string to numeric
+        categories[column] = pd.to_numeric(categories[column])
+    
+    # Replace related==2 by 1
+    categories.replace(2, 1, inplace=True)
+
+    # Drop the original categories column
+    df.drop("categories", axis=1, inplace=True)
+
+    # Concatenate new categories column to the merged dataframe
+    df = pd.concat([df, categories], axis=1)
+
+    return df
+
 
 
 def clean_data(df):
-    pass
+    """Clean dataset"""
+    # Drop duplicate rows
+    df.drop_duplicates(inplace=True)
+    return df
 
 
 def save_data(df, database_filename):
-    pass  
+    engine = create_engine("sqlite:///" + database_filename)
+    df.to_sql('disasters', engine, index=False)  
 
 
 def main():
