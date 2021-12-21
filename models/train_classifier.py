@@ -1,8 +1,15 @@
 import sys
+from sqlalchemy import create_engine
+import pandas as pd
 
 
 def load_data(database_filepath):
-    pass
+    # load data from database
+    engine = create_engine("sqlite:///" + database_filepath)
+    df = pd.read_sql("SELECT * FROM disasters", engine)
+    X = df.loc[:, "genre"]
+    Y = df.loc[:, df.columns != "genre"]
+    return X, Y, category_names
 
 
 def tokenize(text):
