@@ -1,31 +1,97 @@
 import sys
-from sqlalchemy import create_engine
 import pandas as pd
+import re
+import joblib
+from sqlalchemy import create_engine
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem.wordnet import WordNetLemmatizer
+nltk.download("stopwords")
+nltk.download("punkt")
+
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report
+
 
 
 def load_data(database_filepath):
-    # load data from database
+    """Load the 'disasters' table from the disasters database
+    and return dataframes: X (messages), Y (categories), and
+    the list categories_names"""
+
+    # Create SQLite engine
     engine = create_engine("sqlite:///" + database_filepath)
+    
+    # Load data and create dataframe
     df = pd.read_sql("SELECT * FROM disasters", engine)
-    X = df.loc[:, "genre"]
-    Y = df.loc[:, df.columns != "genre"]
+    
+    # Slipt dataframe into X, Y, category_name
+    X = df.loc[:, "message"].values
+    Y = df.drop(["id", "message", "original", "genre", "child_alone"], axis=1)
+    category_names = Y.columns.tolist()
+
     return X, Y, category_names
 
 
 def tokenize(text):
-    pass
+    """Tokenize and lemmatize the messages"""
+
+    # Normalize text
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+    
+    # Remove stop words
+    words = word_tokenize(text)
+    words = [w for w in words if w not in stopwords.words("english")]
+
+    # Reduce words to their root form
+    tokens = [WordNetLemmatizer().lemmatize(w) for w in words]
+
+    return tokens
 
 
 def build_model():
-    pass
+    """Build a machine learning pipeline to classify messages into
+    any of the 36 available categories"""
+
+    # Build a pipeline
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultiOutputClassifier(LogisticRegression()))
+    ])
+
+    # Grid search parameters
+    parameters = {
+        'vect__max_df': (0.5, 1.0),
+        'vect__max_features': (None, 500, 1000),
+        'tfidf__use_idf': (True, False),
+        'clf__estimator__max_iter': [100, 500]
+    }
+
+    # Create grid search object
+    cv = GridSearchCV(pipeline, param_grid=parameters)
+
+    return pipeline
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    """Evaluate the model and print the prediction accuracy"""
+
+    Y_pred = model.predict(X_test)
+    print(classification_report(Y_test, Y_pred, target_names=category_names))
 
 
 def save_model(model, model_filepath):
-    pass
+    joblib.dump(model, model_filepath)
 
 
 def main():

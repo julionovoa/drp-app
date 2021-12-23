@@ -4,12 +4,20 @@ from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
     """Load messages and categories datasets"""
+    
     # Load CSV files
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
 
     # Merge dataframes
     df = messages.merge(categories, on="id")
+
+    return df
+
+
+
+def clean_data(df):
+    """Clean dataset"""
 
     # Split categories column into multiple columns
     categories = df.categories.str.split(";", expand=True)
@@ -27,7 +35,7 @@ def load_data(messages_filepath, categories_filepath):
         # Convert column from string to numeric
         categories[column] = pd.to_numeric(categories[column])
     
-    # Replace related==2 by 1
+    # Replace values 2 => 1
     categories.replace(2, 1, inplace=True)
 
     # Drop the original categories column
@@ -36,20 +44,20 @@ def load_data(messages_filepath, categories_filepath):
     # Concatenate new categories column to the merged dataframe
     df = pd.concat([df, categories], axis=1)
 
-    return df
-
-
-
-def clean_data(df):
-    """Clean dataset"""
     # Drop duplicate rows
     df.drop_duplicates(inplace=True)
+    
     return df
 
 
 def save_data(df, database_filename):
+    """Save clean dataframe to sqlite database"""
+
+    # Create sqlite database
     engine = create_engine("sqlite:///" + database_filename)
-    df.to_sql('disasters', engine, index=False)  
+
+    # Save dataframe to table 'disasters'
+    df.to_sql("disasters", engine, index=False, if_exists="replace")  
 
 
 def main():
