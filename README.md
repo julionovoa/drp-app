@@ -1,27 +1,38 @@
 # Disaster response web app
 
+## Repository structure
+```
+- app
+| - template
+| |- master.html
+| |- go.html
+|- run.py
+
+- data
+|- disaster_categories.csv
+|- disaster_messages.csv
+|- process_data.py
+|- DisastersDatabase.db
+
+- models
+|- train_classifier.py
+|- disasters-response-model.pkl 
+
+- README.md
+```
 
 ## Project Components
-There are three components you'll need to complete for this project.
+The project was organized into three components:
 
 1. ETL Pipeline
-In a Python script, process_data.py, write a data cleaning pipeline that:
+In the **data** folder in this repository one can find the input datasets (\*.csv), the data load and data cleaning Python script (process_data.py), and the SQLite database (DisastersDatabase.db) that stores the cleaned data.
 
-Loads the messages and categories datasets
-Merges the two datasets
-Cleans the data
-Stores it in a SQLite database
 2. ML Pipeline
-In a Python script, train_classifier.py, write a machine learning pipeline that:
+The folder **models** contains the Python script (train_classifier.py) that implements a text processing and machine learning pipeline to classify text messages into one or more categories. Once the model was trained, a serialed model (disasters-response-model.pkl) was created.
 
-Loads data from the SQLite database
-Splits the dataset into training and test sets
-Builds a text processing and machine learning pipeline
-Trains and tunes a model using GridSearchCV
-Outputs results on the test set
-Exports the final model as a pickle file
 3. Flask Web App
 We are providing much of the flask web app for you, but feel free to add extra features depending on your knowledge of flask, html, css and javascript. For this part, you'll need to:
 
 Modify file paths for database and model as needed
 Add data visualizations using Plotly in the web app. One example is provided for you
+
