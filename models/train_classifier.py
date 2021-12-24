@@ -34,7 +34,7 @@ def load_data(database_filepath):
     # Load data and create dataframe
     df = pd.read_sql("SELECT * FROM disasters", engine)
     
-    # Slipt dataframe into X, Y, category_name
+    # Slipt dataframe into X, Y, category_names
     X = df.loc[:, "message"].values
     Y = df.drop(["id", "message", "original", "genre", "child_alone"], axis=1)
     category_names = Y.columns.tolist()
@@ -60,7 +60,7 @@ def tokenize(text):
 
 def build_model():
     """Build a machine learning pipeline to classify messages into
-    any of the 36 available categories"""
+    any of the available categories"""
 
     # Build a pipeline
     pipeline = Pipeline([
@@ -69,18 +69,16 @@ def build_model():
         ('clf', MultiOutputClassifier(LogisticRegression()))
     ])
 
-    # Grid search parameters
+    # GridSearch parameters
     parameters = {
-        'vect__max_df': (0.5, 1.0),
-        'vect__max_features': (None, 500, 1000),
         'tfidf__use_idf': (True, False),
-        'clf__estimator__max_iter': [100, 500]
+        'clf__estimator__max_iter': [500, 1000]
     }
 
-    # Create grid search object
+    # create GridSearch object
     cv = GridSearchCV(pipeline, param_grid=parameters)
 
-    return pipeline
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
@@ -91,6 +89,8 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """Serialize the model"""
+    
     joblib.dump(model, model_filepath)
 
 

@@ -8,7 +8,7 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+import joblib
 from sqlalchemy import create_engine
 
 
@@ -25,12 +25,13 @@ def tokenize(text):
 
     return clean_tokens
 
+
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisastersDatabase.db')
+df = pd.read_sql_table('disasters', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/disasters-response-model.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,9 +43,30 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+
+    # Second graph data
+    drop_cols = ["id", "message", "original"]
+    gen_cat = df.drop(drop_cols, axis=1)
+
+    categories_cols = list(gen_cat.columns)
+    categories_cols.remove("genre")
+
+    total_messages = gen_cat[categories_cols].sum().sort_values(ascending=False).reset_index()
+    ordered_categories = total_messages.values[:, 0]
+    ordered_counts = total_messages[0]
+
+    # Third graph data
+    gby_gen_cat = gen_cat.groupby("genre")[categories_cols].sum().reset_index()
+
+    top3 = gby_gen_cat[categories_cols].sum(axis=0).sort_values(ascending=False)[:3]
+    top3_cols = list(top3.index)
+
+    top3_df = df.groupby("genre")[top3_cols].sum().reset_index()
+    top1 = top3_df.iloc[0, 1:]
+    top2 = top3_df.iloc[1, 1:]
+    top3 = top3_df.iloc[2, 1:]
     
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -56,12 +78,46 @@ def index():
 
             'layout': {
                 'title': 'Distribution of Message Genres',
-                'yaxis': {
-                    'title': "Count"
-                },
-                'xaxis': {
-                    'title': "Genre"
-                }
+                'yaxis': {'title': "Count"},
+                'xaxis': {'title': "Genre"}
+            }
+        },
+        {
+            "data": [
+                Bar(
+                    x=ordered_categories,
+                    y=ordered_counts,
+                )
+            ],
+            "layout": {
+                "title": "Distribution of message categories",
+                "xaxis": {"title": "Message categories"},
+                "yaxis": {"title": "Count"}
+            }
+        },
+        {
+            "data": [
+                Bar(
+                    y=top1,
+                    x=top3_df["genre"],
+                    name=top3_cols[0]
+                ),
+                Bar(
+                    y=top2,
+                    x=top3_df["genre"],
+                    name=top3_cols[1]
+                ),
+                Bar(
+                    y=top3,
+                    x=top3_df["genre"],
+                    name=top3_cols[2]
+                )
+            ],
+            "layout": {
+                "barmode": "stack",
+                "title": "Top 3 message categories",
+                "xaxis": {"title": "Message genre"},
+                "yaxis": {"title": "Count"}
             }
         }
     ]

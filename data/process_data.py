@@ -39,14 +39,18 @@ def clean_data(df):
     categories.replace(2, 1, inplace=True)
 
     # Drop the original categories column
-    df.drop("categories", axis=1, inplace=True)
+    df.drop(columns="categories", axis=1, inplace=True)
 
     # Concatenate new categories column to the merged dataframe
     df = pd.concat([df, categories], axis=1)
 
+    # Drop columns with only zeroes
+    empty_cols = [col for col in category_colnames if df[col].sum() == 0]
+    df.drop(empty_cols, axis=1, inplace=True)
+
     # Drop duplicate rows
     df.drop_duplicates(inplace=True)
-    
+
     return df
 
 

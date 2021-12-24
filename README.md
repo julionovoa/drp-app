@@ -31,8 +31,4 @@ In the **data** folder in this repository one can find the input datasets (\*.cs
 The folder **models** contains the Python script (train_classifier.py) that implements a text processing and machine learning pipeline to classify text messages into one or more categories. Once the model was trained, a serialed model (disasters-response-model.pkl) was created.
 
 3. Flask Web App
-We are providing much of the flask web app for you, but feel free to add extra features depending on your knowledge of flask, html, css and javascript. For this part, you'll need to:
-
-Modify file paths for database and model as needed
-Add data visualizations using Plotly in the web app. One example is provided for you
-
+In the folder **app** there are two web templates for the main app webpage and the app results webpage. The Python script (run.py) provides the code to execute the app using Flask as backend.
