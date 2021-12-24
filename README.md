@@ -1,5 +1,5 @@
 # Disaster response web app
-This project shows a complete workflow to ingest data, clean, store in a database, for later train a NLP model to classify text messages into 36 available categories.
+This project shows a complete workflow to process a dataset of real messages sent during disaster events. The final product of this exercise is a functional web app that allows to input new messages for categorizing them. The workflow to achieve this includes data cleaning, database storing, and a NLP machine learning pipeline to create a serialized model to be used by the Flask web app.
 
 ## Repository structure
 ```
